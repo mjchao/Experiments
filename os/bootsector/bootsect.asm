@@ -8,7 +8,9 @@ int 0x10
 int 0x10
 mov al, 'o'
 int 0x10
-mov al, ' '
+mov al, 0x0d ; carriage return
+int 0x10;
+mov al, 0x0a ; newline
 int 0x10
 mov al, 'W'
 int 0x10
