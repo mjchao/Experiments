@@ -1,4 +1,13 @@
 ; loads 'dh' sectors from drive 'dl' into ES:BX
+;
+; There are two potenial BIOS errors: "Disk error" and "Sectors error".
+;
+; Disk error occurs if the BIOS could not read from the disk. al will be set
+; to 0x1 and ah will be set to the BIOS error code.
+;
+; Sectors error occurs if the BIOS could not read the requested number
+; of sectors. An error message will and al will be set to 0x2. If no error
+; occurs, al will be set to 0x0.
 disk_load:
   pusha
   push dx
@@ -19,29 +28,19 @@ disk_load:
                   ; equal to the number of sectors the caller wanted to read,
                   ; then there was an error reading the sectors.
   jne sectors_error
-  popa
-  ret
+
+  mov al, 0x00    ; indicate no error occurred.
+  jmp disk_load_done
 
 disk_error:
-  mov bx, DISK_ERROR
-  call print_str
-  call print_newline
-  mov bh, ah      ; ah contains the error code
-  mov bl, 0x00    ; set lower bits to 0 because they're irrelevant
-  call print_hex
-  jmp disk_loop
+  mov al, 0x01    ; indicate a disk error occurred
+  jmp disk_load_done
 
 sectors_error:
-  mov bx, SECTORS_ERROR
-  call print_str
-  call print_newline
+  mov al, 0x02    ; indicate a sector error occurred
+  jmp disk_load_done
 
-disk_loop:
-  jmp $
-
-DISK_ERROR:
-  db "Disk read error", 0
-
-SECTORS_ERROR:
-  db "Incorrect number of sectors read", 0
+disk_load_done:
+  popa
+  ret
 
