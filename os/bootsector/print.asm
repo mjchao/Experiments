@@ -29,6 +29,13 @@ print_str_done:
   popa
   ret
 
+; Prints a newline (carriage return then newline)
+print_newline:
+  pusha
+  mov bx, NEWLINE
+  call print_str
+  popa
+  ret
 
 ; Prints the value in the bx register in hex
 print_hex:
@@ -69,3 +76,6 @@ print_hex_done:
   popa
   ret
 
+NEWLINE:
+  db 0x0d, 0x0a, 0
+  
