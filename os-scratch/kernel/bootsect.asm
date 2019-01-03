@@ -6,7 +6,7 @@ KERNEL_OFFSET equ 0x1000       ; Linker will offset kernel code by 0x1000
   mov sp, bp
 
   mov bx, MSG_REAL_MODE
-  call print_str                        ; never executed
+  call print_str
   call print_newline
 
   call load_kernel             ; Read kernel from disk
