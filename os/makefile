@@ -11,16 +11,16 @@ os-image.bin: boot/bootsect.bin kernel.bin
 	cat $^ > os-image.bin
 
 kernel.bin: boot/kernel_entry.o $(OBJ)
-	ld -o $@ -Ttext 0x10000 $^ --oformat binary
+	ld -m elf_i386 -o $@ -Ttext 0x1000 $^ --oformat binary
 
 run: os-image.bin
 	qemu-system-i386 -fda os-image.bin
 
 %.o: %.c ${HEADERS}
-	$(CC) $(CFLAGS) $(IFLAGS) -ffreestanding -c $< -o $@
+	$(CC) $(CFLAGS) $(IFLAGS) -ffreestanding -m32 -c $< -o $@
 
 %.o: %.asm
-	$(ASM) $< -f elf64 -o $@
+	$(ASM) $< -f elf -o $@
 
 %.bin: %.asm
 	$(ASM) $< -f bin -o $@
