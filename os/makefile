@@ -1,4 +1,5 @@
 CC=gcc
+IFLAGS=-I .
 CFLAGS=-g
 ASM=nasm
 
@@ -16,7 +17,7 @@ run: os-image.bin
 	qemu-system-i386 -fda os-image.bin
 
 %.o: %.c ${HEADERS}
-	$(CC) $(CFLAGS) -ffreestanding -c $< -o $@
+	$(CC) $(CFLAGS) $(IFLAGS) -ffreestanding -c $< -o $@
 
 %.o: %.asm
 	$(ASM) $< -f elf64 -o $@
