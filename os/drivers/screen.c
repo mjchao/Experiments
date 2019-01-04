@@ -1,6 +1,8 @@
+#include "screen.h"
 #include "drivers/ports.h"
 
 const static int VIDEO_ADDRESS = 0xb8000;
+const static int MAX_ROWS = 25;
 const static int MAX_COLS = 80;
 
 const static int REG_SCREEN_CTRL = 0x3d4;
@@ -30,6 +32,16 @@ void print_str(const char* c, int attr) {
     set_cursor_position(cursor_row, cursor_col);
     ++curr; 
   }
+}
+
+void clear_screen() {
+  for (int row = 0; row < MAX_ROWS; ++row) {
+    for (int col = 0; col < MAX_COLS; ++col) {
+      int position = position_from_row_col(row, col);
+      print_char_at_position(' ', position, WHITE_ON_BLACK);
+    }
+  }
+  set_cursor_position(0, 0);
 }
 
 static void print_char_at_position(char c, int position, int attr) {
