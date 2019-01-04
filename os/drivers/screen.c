@@ -34,7 +34,7 @@ void print_str(const char* c, int attr) {
   }
 }
 
-void clear_screen() {
+void clear_terminal() {
   for (int row = 0; row < MAX_ROWS; ++row) {
     for (int col = 0; col < MAX_COLS; ++col) {
       int position = position_from_row_col(row, col);

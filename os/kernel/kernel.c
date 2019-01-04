@@ -5,7 +5,7 @@ void entrypoint() {
 }
 
 void main() {
-  clear_screen();
+  clear_terminal();
   print_str("Hello World!", WHITE_ON_BLACK);
   print_str("HELLO WORLD!", WHITE_ON_BLACK);
 }
