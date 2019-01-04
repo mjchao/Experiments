@@ -1,13 +1,13 @@
 #include "screen.h"
+
 #include "drivers/ports.h"
 
 const static int VIDEO_ADDRESS = 0xb8000;
-const static int MAX_ROWS = 25;
+const static int MAX_ROWS = 20;
 const static int MAX_COLS = 80;
 
 const static int REG_SCREEN_CTRL = 0x3d4;
 const static int REG_SCREEN_DATA = 0x3d5;
-
 
 static int row_from_position(int position);
 static int col_from_position(int position);
@@ -16,17 +16,23 @@ static int get_cursor_position();
 static void set_cursor_position(int row, int col);
 static void print_char_at_position(char c, int row, int col);
 
+
 void print_str(const char* c, int attr) {
-  char* curr = c;
+  const char* curr = c;
   int cursor_position = get_cursor_position();
   int cursor_row = row_from_position(cursor_position);
   int cursor_col = col_from_position(cursor_position);
   while (*curr != '\0') {
     print_char_at_position(*curr, cursor_position, attr);  
     ++cursor_col;
-    if (cursor_col == 80) {
+    if (cursor_col == MAX_COLS) {
       cursor_col = 0;
       cursor_row += 1;
+    }
+    if (cursor_row == MAX_ROWS) {
+      clear_terminal();
+      cursor_row = 0;
+      cursor_col = 0;
     }
     cursor_position = position_from_row_col(cursor_row, cursor_col);
     set_cursor_position(cursor_row, cursor_col);
@@ -45,7 +51,7 @@ void clear_terminal() {
 }
 
 static void print_char_at_position(char c, int position, int attr) {
-  unsigned char *vidmem = (unsigned char*) VIDEO_ADDRESS;
+  unsigned char* vidmem = (unsigned char*) VIDEO_ADDRESS;
   vidmem[position] = c;
   vidmem[position + 1] = attr;
 }
