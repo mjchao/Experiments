@@ -5,8 +5,7 @@ void entrypoint() {
 }
 
 void main() {
-  print_char_at('X', 0, 0);
-  print_char_at('B', 15, 21);
-  print_char_at('C', 15, 22);
+  print_str("Hello World!", WHITE_ON_BLACK);
+  //print_char_at_position('A', 10, 10);
 }
 

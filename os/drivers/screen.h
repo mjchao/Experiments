@@ -1,3 +1,3 @@
-#include "drivers/ports.h"
+#define WHITE_ON_BLACK 0x0f
 
-void print_char_at(char c, int row, int col);
+void print_str(const char* c, int attr);
