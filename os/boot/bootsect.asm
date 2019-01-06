@@ -18,7 +18,7 @@ KERNEL_OFFSET equ 0x1000       ; Linker will offset kernel code by 0x1000
 %include "boot/print32bit.asm"
 %include "boot/disk_load.asm"
 %include "boot/gdt.asm"
-%include "boot/32bit-switch.asm"
+%include "boot/32bit_switch.asm"
 
 
 [bits 16]
@@ -28,7 +28,7 @@ load_kernel:
   call print_newline
   
   mov bx, KERNEL_OFFSET
-  mov dh, 2
+  mov dh, 16
   mov dl, [BOOT_DRIVE]
   call disk_load
   ret

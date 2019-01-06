@@ -17,6 +17,23 @@ static void set_cursor_position(int row, int col);
 static void print_char_at_position(char c, int row, int col);
 
 
+void scroll() {
+  unsigned char* vidmem = (unsigned char*) VIDEO_ADDRESS;
+  for (int row = 1; row < MAX_ROWS; ++row) {
+    for (int col = 0; col < MAX_COLS; ++col) {
+      int src_pos = position_from_row_col(row, col);
+      int dest_pos = position_from_row_col(row - 1, col);
+      vidmem[dest_pos] = vidmem[src_pos];
+      vidmem[dest_pos + 1] = vidmem[src_pos + 1];
+    }
+  }
+  for (int col = 0; col < MAX_COLS; ++col) {
+    int clear_pos = position_from_row_col(MAX_ROWS - 1, col);
+    vidmem[clear_pos] = ' ';
+    vidmem[clear_pos + 1] = WHITE_ON_BLACK;
+  }
+}
+
 void print_str(const char* c, int attr) {
   const char* curr = c;
   int cursor_position = get_cursor_position();
@@ -30,8 +47,8 @@ void print_str(const char* c, int attr) {
       cursor_row += 1;
     }
     if (cursor_row == MAX_ROWS) {
-      clear_terminal();
-      cursor_row = 0;
+      scroll();
+      cursor_row = MAX_ROWS - 1;
       cursor_col = 0;
     }
     cursor_position = position_from_row_col(cursor_row, cursor_col);
