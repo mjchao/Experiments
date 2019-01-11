@@ -3,9 +3,9 @@ IFLAGS=-I .
 CFLAGS=-g
 ASM=nasm
 
-C_SOURCES = $(wildcard kernel/*.c drivers/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h)
-OBJ = $(C_SOURCES:.c=.o)
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h)
+OBJ = $(C_SOURCES:.c=.o cpu/interrupt.o)
 
 os-image.bin: boot/bootsect.bin kernel.bin
 	cat $^ > os-image.bin
