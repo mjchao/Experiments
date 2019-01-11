@@ -1,9 +1,8 @@
-#include "screen.h"
-
+#include "drivers/screen.h"
 #include "drivers/ports.h"
 
 const static int VIDEO_ADDRESS = 0xb8000;
-const static int MAX_ROWS = 20;
+const static int MAX_ROWS = 25;
 const static int MAX_COLS = 80;
 
 const static int REG_SCREEN_CTRL = 0x3d4;

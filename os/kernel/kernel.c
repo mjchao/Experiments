@@ -9,7 +9,7 @@ void main() {
   print_str("Hello World!", WHITE_ON_BLACK);
   print_str("HELLO WORLD!", WHITE_ON_BLACK);
   int num = 0;
-  for (int i = 0; i < 20; ++i) {
+  for (int i = 0; i < 25; ++i) {
     for (int j = 0; j < 80; ++j) {
       char c[2];
       c[0] = '0' + (num % 10);
