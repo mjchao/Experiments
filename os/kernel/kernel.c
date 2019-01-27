@@ -1,4 +1,6 @@
 #include "drivers/screen.h"
+#include "cpu/isr.h"
+#include "cpu/timer.h"
 
 // ???
 void entrypoint() {
@@ -6,18 +8,15 @@ void entrypoint() {
 
 void main() {
   clear_terminal();
-  print_str("Hello World!", WHITE_ON_BLACK);
-  print_str("HELLO WORLD!", WHITE_ON_BLACK);
-  int num = 0;
-  for (int i = 0; i < 25; ++i) {
-    for (int j = 0; j < 80; ++j) {
-      char c[2];
-      c[0] = '0' + (num % 10);
-      c[1] = '\0';
-      print_str(&c, WHITE_ON_BLACK);
-      ++num;
-    }
-  }
+  print_str("Hello World!\n\n\n", WHITE_ON_BLACK);
+  print_str("HELLO WORLD!\n", WHITE_ON_BLACK);
+
+  isr_install();
+  //__asm__ __volatile__("int $2");
+  //__asm__ __volatile__("int $3");
+  asm volatile("sti");
+  init_timer(50);
+  
   return;
 }
 

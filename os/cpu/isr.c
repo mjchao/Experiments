@@ -1,6 +1,12 @@
 #include "cpu/isr.h"
 #include "cpu/idt.h"
 #include "drivers/screen.h"
+#include "drivers/ports.h"
+#include "kernel/util.h"
+
+
+isr_t interrupt_handlers[256];
+
 
 /* Can't do this with a loop because we need the address
  * of the function names */
@@ -81,5 +87,29 @@ char *exception_messages[] = {
 };
 
 void isr_handler(registers_t r) {
-	print_str("received interrupt ", WHITE_ON_BLACK);
+	/*print_str("received interrupt ", WHITE_ON_BLACK);
+  char s[3];
+  int_to_ascii(r.int_no, s);
+  kprint(s);
+  kprint("\n");
+  kprint(exception_messages[r.int_no]);
+  kprint("\n");*/
 }
+
+void register_interrupt_handler(u8 n, isr_t handler) {
+  interrupt_handlers[n] = handler;
+}
+
+void irq_handler(registers_t r) {
+  kprint("handler called\n");
+  if (r.int_no >= 40) {
+    port_byte_out(0xA0, 0x20);
+  }
+  port_byte_out(0x20, 0x20);
+
+  if (interrupt_handlers[r.int_no] != 0) {
+    isr_t handler = interrupt_handlers[r.int_no];
+    handler(r);
+  }
+}
+

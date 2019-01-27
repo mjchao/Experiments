@@ -17,14 +17,24 @@ static void print_char_at_position(char c, int row, int col);
 static void scroll_one_row();
 
 
+void kprint(const char* c) {
+  print_str(c, WHITE_ON_BLACK);
+}
+
+
 void print_str(const char* c, int attr) {
   const char* curr = c;
   int cursor_position = get_cursor_position();
   int cursor_row = row_from_position(cursor_position);
   int cursor_col = col_from_position(cursor_position);
   while (*curr != '\0') {
-    print_char_at_position(*curr, cursor_position, attr);  
-    ++cursor_col;
+    if (*curr == '\n') {
+      cursor_row += 1;
+      cursor_col = 0;
+    } else {
+      print_char_at_position(*curr, cursor_position, attr);  
+      ++cursor_col;
+    }
     if (cursor_col == MAX_COLS) {
       cursor_col = 0;
       cursor_row += 1;

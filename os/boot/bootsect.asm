@@ -28,7 +28,7 @@ load_kernel:
   call print_newline
   
   mov bx, KERNEL_OFFSET
-  mov dh, 16
+  mov dh, 32
   mov dl, [BOOT_DRIVE]
   call disk_load
   ret
