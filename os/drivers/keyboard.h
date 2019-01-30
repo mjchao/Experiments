@@ -1,10 +1,13 @@
+#include "cpu/types.h"
+
+
 enum KeyIndex {
   K_ERROR,                                                                            
   K_ESC,
   K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9, K_0, K_DASH, K_EQ, K_BACKSPACE,
   K_TAB, K_Q, K_W, K_E, K_R, K_T, K_Y, K_U, K_I, K_O, K_P, K_LBRACKET, K_RBRACKET,
   K_ENTER,
-  K_LCTRL,
+  K_CTRL,
   K_A, K_S, K_D, K_F, K_G, K_H, K_J, K_K, K_L, K_SEMICOLON, K_APOSTROPHE, K_LEFTQUOTE,
   K_LSHIFT,
   K_BACKSLASH,
@@ -21,6 +24,18 @@ enum KeyIndex {
   K_KEYPAD1, K_KEYPAD2, K_KEYPAD3,
   K_KEYPAD0, K_KEYPADPERIOD
 };
+
+enum KeyMod {
+  KMOD_CTRL    = 1 << 0, // ctrl key
+  KMOD_ALT     = 1 << 2, // alt key 
+  KMOD_SHIFT   = 1 << 1, // shift key
+  KMOD_EXTEND  = 1 << 3, // extend key (e.g. extending keypad-7 gives "home")
+};
+
+typedef void (*keyevent_handler_t)(u8 keyindex, u8 modifiers); 
+//keyevent_handler_t* on_key_typed = nullptr;
+//keyevent_handler_t* on_key_down = nullptr;
+//keyevent_handler_t* on_key_up = nullptr;
 
 void init_keyboard();
 

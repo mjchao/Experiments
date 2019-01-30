@@ -3,6 +3,7 @@
 #include "drivers/screen.h"
 #include "cpu/isr.h"
 #include "kernel/util.h"
+#include <stdbool.h>
 
 
 char* scancode_text[] = {
@@ -12,7 +13,7 @@ char* scancode_text[] = {
   "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "BACKSPACE",    // 2 - 14
   "TAB", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]",          // 15 - 27
   "ENTER",                                                                    // 28
-  "LCTRL",                                                                    // 29
+  "CTRL",                                                                     // 29
   "a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'", "`",                 // 30 - 41
   "LSHIFT",                                                                   // 42
   "\\",                                                                       // 43
@@ -30,60 +31,103 @@ char* scancode_text[] = {
   "Keypad-0/Ins", "Keypad-./Del"                                              // 82 - 83
 };
 
-static void on_key_up(u8 code) {
-  kprint(scancode_text[code]);
-  kprint(" was released\n");
-}
 
-static void on_key_down(u8 code) {
-  kprint(scancode_text[code]);
-  kprint(" was pressed\n");
-}
+static bool is_num_lock = false;
+static bool is_caps_lock = false;
+static bool is_scroll_lock = false;
+static bool is_ctrl = false;
+static bool is_alt = false;
+static bool is_shift = false;
+static bool is_extend = false;
+const static int NUM_RECOGNIZED_CODES = sizeof(scancode_text) / sizeof(char*);
 
-static void print_letter(u8 scancode) {
-  const static int NUM_RECOGNIZED_CODES = sizeof(scancode_text) / sizeof(char*);
-  if (scancode <= 128) {
-    if (scancode < NUM_RECOGNIZED_CODES) {
-      int key_index = scancode;
-      on_key_down(key_index);
-    } else {
-      kprint("Unknown key down");
+static void handle_key_down(u8 code) {
+  switch (code) {
+  
+  case K_CTRL:
+    is_ctrl = true;
+    break;
+
+  case K_ALT:
+    is_alt = true;
+    break;
+
+  case K_LSHIFT:
+  case K_RSHIFT:
+    is_shift = true;
+    break;
+
+  case K_NUMLOCK:
+    is_num_lock = !is_num_lock;
+    break;
+
+  case K_CAPSLOCK:
+    is_caps_lock = !is_caps_lock;
+    break;
+
+  case K_SCROLLLOCK:
+    is_scroll_lock = !is_scroll_lock;
+    break;
+
+  case K_ESC:
+    // ignore
+    break;
+
+  default:
+    kprint(scancode_text[code]);
+    kprint(" ");
+    if (is_ctrl) {
+      kprint("CTRL ");
     }
-  } else if (scancode <= 128 + NUM_RECOGNIZED_CODES) {
-    int key_index = scancode - 128;
-    on_key_up(key_index);
-  } else if (scancode == 224) {
-    kprint("SPECIAL\n");
+    if (is_alt) {
+      kprint("ALT ");
+    }
+    if ((is_shift && !is_caps_lock) || (!is_shift && is_caps_lock)) {
+      kprint("SHIFT ");
+    }
+    kprint("\n");
+    break;
   }
+}
 
-  /*if (scancode < num_recognized_codes) {
-    kprint(scancode_text[scancode]);
-  } else {
-    if (scancode <= 0x7f) {
-        kprint("Unknown key down");
-    } else if (scancode <= 0x39 + 0x80) {
-        kprint("key up ");
-        int buf[10];
-        int_to_ascii(buf, scancode);
-        kprint(buf);
-        kprint(" ");
+static void handle_key_up(u8 code) {
+  switch (code) {
+  
+  case K_CTRL:
+    is_ctrl = false;
+    break;
 
-    } else {
-      // TODO 224 means the left-right-up-down non-numpad keys. You'll get
-      // something like 224 UP 224
-      // 203 means the numpad keys. You'll get something like Keypad-4/Up 203.
-      kprint("Unknown");
-      int buf[10];
-      int_to_ascii(scancode, buf);
-      kprint(buf);
-      kprint(" ");
-    }
-  }*/
+  case K_ALT:
+    is_alt = false;
+    break;
+
+  case K_LSHIFT:
+  case K_RSHIFT:
+    is_shift = false;
+    break;
+
+  default:
+    // ignore
+    break;
+  }
 }
 
 static void keyboard_callback(registers_t regs) {
   u8 scancode = port_byte_in(0x60);
-  print_letter(scancode);
+
+  if (scancode <= 128) {
+    if (scancode < NUM_RECOGNIZED_CODES) {
+      int key_index = scancode;
+      handle_key_down(key_index);
+    } else {
+      kprint("Unknown key down\n");
+    }
+  } else if (scancode <= 128 + NUM_RECOGNIZED_CODES) {
+    int key_index = scancode - 128;
+    handle_key_up(key_index);
+  } else if (scancode == 224) {
+    is_extend = !is_extend;
+  }
 }
 
 void init_keyboard() {
