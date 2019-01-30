@@ -5,7 +5,7 @@
 #include "kernel/util.h"
 
 
-char* keyboard_vals[] = {
+char* scancode_text[] = {
                                                                               // Scancode (base 10)
   "ERROR",                                                                    // 0
   "ESC",                                                                      // 1
@@ -30,19 +30,55 @@ char* keyboard_vals[] = {
   "Keypad-0/Ins", "Keypad-./Del"                                              // 82 - 83
 };
 
-void print_letter(u8 scancode) {
-  int num_recognized_codes = sizeof(keyboard_vals) / sizeof(char*);
-  if (scancode < num_recognized_codes) {
-    kprint(keyboard_vals[scancode]);
+static void on_key_up(u8 code) {
+  kprint(scancode_text[code]);
+  kprint(" was released\n");
+}
+
+static void on_key_down(u8 code) {
+  kprint(scancode_text[code]);
+  kprint(" was pressed\n");
+}
+
+static void print_letter(u8 scancode) {
+  const static int NUM_RECOGNIZED_CODES = sizeof(scancode_text) / sizeof(char*);
+  if (scancode <= 128) {
+    if (scancode < NUM_RECOGNIZED_CODES) {
+      int key_index = scancode;
+      on_key_down(key_index);
+    } else {
+      kprint("Unknown key down");
+    }
+  } else if (scancode <= 128 + NUM_RECOGNIZED_CODES) {
+    int key_index = scancode - 128;
+    on_key_up(key_index);
+  } else if (scancode == 224) {
+    kprint("SPECIAL\n");
+  }
+
+  /*if (scancode < num_recognized_codes) {
+    kprint(scancode_text[scancode]);
   } else {
     if (scancode <= 0x7f) {
         kprint("Unknown key down");
     } else if (scancode <= 0x39 + 0x80) {
         kprint("key up ");
+        int buf[10];
+        int_to_ascii(buf, scancode);
+        kprint(buf);
+        kprint(" ");
+
     } else {
-      kprint("Unknown key up");
+      // TODO 224 means the left-right-up-down non-numpad keys. You'll get
+      // something like 224 UP 224
+      // 203 means the numpad keys. You'll get something like Keypad-4/Up 203.
+      kprint("Unknown");
+      int buf[10];
+      int_to_ascii(scancode, buf);
+      kprint(buf);
+      kprint(" ");
     }
-  }
+  }*/
 }
 
 static void keyboard_callback(registers_t regs) {
