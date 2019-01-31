@@ -28,7 +28,8 @@ enum {
   K_MINUS,
   K_KEYPAD4, K_KEYPAD5, K_KEYPAD6, K_PLUS,
   K_KEYPAD1, K_KEYPAD2, K_KEYPAD3,
-  K_KEYPAD0, K_KEYPADPERIOD
+  K_KEYPAD0, K_KEYPADPERIOD,
+  K_NUMBER_OF_KEYS, // not an actual key - just used to determine size of enum
 };
 
 /**
@@ -36,10 +37,12 @@ enum {
  */
 typedef u8 KeyMod_t;
 enum {
-  KMOD_CTRL    = 1 << 0, // ctrl key
-  KMOD_ALT     = 1 << 2, // alt key 
-  KMOD_SHIFT   = 1 << 1, // shift key
-  KMOD_EXTEND  = 1 << 3, // extend key (e.g. extending keypad-7 gives "home")
+  KMOD_CTRL     = 1 << 0, // ctrl key
+  KMOD_ALT      = 1 << 2, // alt key 
+  KMOD_SHIFT    = 1 << 1, // shift key
+  KMOD_EXTEND   = 1 << 3, // extend key (e.g. extending keypad-7 gives "home")
+  KMOD_NUMLOCK  = 1 << 4, // numlock is on
+  KMOD_CAPSLOCK = 1 << 5, // capslock is on
 };
 
 /**
@@ -58,12 +61,12 @@ typedef void (*keyevent_handler_t)(KeyCode_t keycode, KeyMod_t modifiers);
 /**
  * Callback when a key is pressed down.
  */
-extern keyevent_handler_t* on_key_down;
+extern keyevent_handler_t keyboard_on_key_down;
 
 /**
  * Callback when a key is released.
  */
-extern keyevent_handler_t* on_key_up;
+extern keyevent_handler_t keyboard_on_key_up;
 
 /**
  * Initializes the keyboard driver.
