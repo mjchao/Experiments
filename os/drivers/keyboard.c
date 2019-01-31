@@ -2,8 +2,13 @@
 #include "drivers/ports.h"
 #include "drivers/screen.h"
 #include "cpu/isr.h"
+#include "cpu/types.h"
 #include "kernel/util.h"
 #include <stdbool.h>
+
+
+keyevent_handler_t* on_key_down = NULL;
+keyevent_handler_t* on_key_up = NULL;
 
 
 char* scancode_text[] = {
@@ -41,6 +46,23 @@ static bool is_shift = false;
 static bool is_extend = false;
 const static int NUM_RECOGNIZED_CODES = sizeof(scancode_text) / sizeof(char*);
 
+static u8 build_modifiers() {
+  int mod = 0;
+  if (is_ctrl) {
+    mod |= KMOD_CTRL;
+  }
+  if (is_alt) {
+    mod |= KMOD_ALT;
+  }
+  if ((is_shift && !is_caps_lock) || (!is_shift && is_caps_lock)) {
+    mod |= KMOD_SHIFT;
+  }
+  if (is_extend) {
+    mod |= KMOD_EXTEND;
+  }
+  return mod;
+}
+
 static void handle_key_down(u8 code) {
   switch (code) {
   
@@ -74,19 +96,11 @@ static void handle_key_down(u8 code) {
     break;
 
   default:
-    kprint(scancode_text[code]);
-    kprint(" ");
-    if (is_ctrl) {
-      kprint("CTRL ");
-    }
-    if (is_alt) {
-      kprint("ALT ");
-    }
-    if ((is_shift && !is_caps_lock) || (!is_shift && is_caps_lock)) {
-      kprint("SHIFT ");
-    }
-    kprint("\n");
     break;
+  }
+
+  if (on_key_down != NULL) {
+    (*on_key_down)(code, build_modifiers());
   }
 }
 
@@ -109,6 +123,10 @@ static void handle_key_up(u8 code) {
   default:
     // ignore
     break;
+  }
+
+  if (on_key_up != NULL) {
+    (*on_key_up)(code, build_modifiers());
   }
 }
 

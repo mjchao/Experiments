@@ -1,5 +1,5 @@
-#include "drivers/screen.h"
 #include "drivers/keyboard.h"
+#include "drivers/screen.h"
 #include "cpu/isr.h"
 #include "cpu/timer.h"
 
@@ -9,8 +9,8 @@ void entrypoint() {
 
 void main() {
   clear_terminal();
-  print_str("Hello World!\n\n\n", WHITE_ON_BLACK);
-  print_str("HELLO WORLD!\n", WHITE_ON_BLACK);
+  kprint("Hello World!\n\n\n");
+  kprint("HELLO WORLD!\n");
 
   isr_install();
   //__asm__ __volatile__("int $2");

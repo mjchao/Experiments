@@ -1,8 +1,14 @@
+#ifndef DRIVERS_KEYBOARD_H
+#define DRIVERS_KEYBOARD_H
+
 #include "cpu/types.h"
 
-
-enum KeyIndex {
-  K_ERROR,                                                                            
+/**
+ * Maps each key to a unique integer code.
+ */
+typedef u8 KeyCode_t;
+enum {
+  K_ERROR,  // K_ERROR indicates an error occurred. You should never get K_ERROR
   K_ESC,
   K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9, K_0, K_DASH, K_EQ, K_BACKSPACE,
   K_TAB, K_Q, K_W, K_E, K_R, K_T, K_Y, K_U, K_I, K_O, K_P, K_LBRACKET, K_RBRACKET,
@@ -25,17 +31,43 @@ enum KeyIndex {
   K_KEYPAD0, K_KEYPADPERIOD
 };
 
-enum KeyMod {
+/**
+ * Maps modifiers to a unique value. 
+ */
+typedef u8 KeyMod_t;
+enum {
   KMOD_CTRL    = 1 << 0, // ctrl key
   KMOD_ALT     = 1 << 2, // alt key 
   KMOD_SHIFT   = 1 << 1, // shift key
   KMOD_EXTEND  = 1 << 3, // extend key (e.g. extending keypad-7 gives "home")
 };
 
-typedef void (*keyevent_handler_t)(u8 keyindex, u8 modifiers); 
-//keyevent_handler_t* on_key_typed = nullptr;
-//keyevent_handler_t* on_key_down = nullptr;
-//keyevent_handler_t* on_key_up = nullptr;
+/**
+ * An event handler for when a keyboard event occurs.
+ *
+ * @param keycode the keycode for the key that was pressed
+ * @param modifiers any modifiers (e.g. shift, ctrl, alt). If the keycode
+ *    is for a modifier key, the modifier will represent after the key has been
+ *    pressed/released. For example, if the user presses CTRL, the keycode will
+ *    be CTRL and the modifier will contain KMOD_CTRL. If the user releases
+ *    CTRL, the keycode will be CTRL and the modifier will no longer contain
+ *    KMOD_CTRL.
+ */
+typedef void (*keyevent_handler_t)(KeyCode_t keycode, KeyMod_t modifiers); 
 
+/**
+ * Callback when a key is pressed down.
+ */
+extern keyevent_handler_t* on_key_down;
+
+/**
+ * Callback when a key is released.
+ */
+extern keyevent_handler_t* on_key_up;
+
+/**
+ * Initializes the keyboard driver.
+ */
 void init_keyboard();
 
+#endif
