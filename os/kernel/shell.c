@@ -57,24 +57,46 @@ static char* shift_keycode_str[] = {
   "Keypad-1/End", "Keypad-2/Down", "Keypad-3/PgDn",                           // 79 - 81
   "Keypad-0/Ins", "Keypad-./Del",                                             // 82 - 83
   "RESERVED", // maps K_NUMBER_OF_KEYS just in case it gets triggered
-  
 };
-
-
-static void on_key_down(KeyCode_t keycode, KeyMod_t modifiers) {
-}
 
 static void print_char(KeyCode_t keycode, KeyMod_t modifiers) {
   bool is_shift = (modifiers & KMOD_SHIFT); 
+  bool is_caps_lock = (modifiers & KMOD_CAPSLOCK);
+  bool is_alpha = (K_Q <= keycode && keycode <= K_P) ||
+      (K_A <= keycode && keycode <= K_L) ||
+      (K_Z <= keycode && keycode <= K_M);
+
   if (is_shift) {
-    // TODO account for capslock too.
-    kprint(shift_keycode_str[keycode]);
+    if (is_alpha) {
+      if (is_caps_lock) {
+        kprint(keycode_str[keycode]);
+      } else {
+        kprint(shift_keycode_str[keycode]);
+      }
+    } else {
+      kprint(shift_keycode_str[keycode]);
+    }
   } else {
-    kprint(keycode_str[keycode]);
+    if (is_alpha) {
+      if (is_caps_lock) {
+        kprint(shift_keycode_str[keycode]);
+      } else {
+        kprint(keycode_str[keycode]);
+      }
+    } else {
+      kprint(keycode_str[keycode]);
+    }
   }
 }
 
-static void on_key_up(KeyCode_t keycode, KeyMod_t modifiers) {
+static void handle_keypad_down(KeyCode_t keycode, KeyMod_t modifiers) {
+  switch (keycode) {
+  case K_ERROR:
+    break;
+  }
+}
+
+static void on_key_down(KeyCode_t keycode, KeyMod_t modifiers) {
   switch (keycode) {
 
   // these keys don't ever affect what's displayed in the shell
@@ -93,11 +115,9 @@ static void on_key_up(KeyCode_t keycode, KeyMod_t modifiers) {
   case K_KEYPAD7:
   case K_KEYPAD8:
   case K_KEYPAD9:
-  case K_MINUS:
   case K_KEYPAD4:
   case K_KEYPAD5:
   case K_KEYPAD6:
-  case K_PLUS:
   case K_KEYPAD1:
   case K_KEYPAD2:
   case K_KEYPAD3:
@@ -118,6 +138,10 @@ static void on_key_up(KeyCode_t keycode, KeyMod_t modifiers) {
     print_char(keycode, modifiers);
     break;
   }
+}
+
+static void on_key_up(KeyCode_t keycode, KeyMod_t modifiers) {
+
 }
 
 
