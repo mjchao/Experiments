@@ -26,11 +26,12 @@ static char* keycode_str[] = {
   "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",                // 59 - 68
   "NumLock",                                                                  // 69
   "ScrollLock",                                                               // 70
-  "Keypad-7/Home", "Keypad-8/Up", "Keypad-9/PgUp",                            // 71 -73
-  "Keypad--",                                                                 // 74
-  "Keypad-4/Left", "Keypad-5", "Keypad-6/Right", "Keypad-+",                  // 75 - 78
-  "Keypad-1/End", "Keypad-2/Down", "Keypad-3/PgDn",                           // 79 - 81
-  "Keypad-0/Ins", "Keypad-./Del"                                              // 82 - 83
+  "7", "8", "9",                                                              // 71 -73
+  "-",                                                                        // 74
+  "4", "5", "6", "+",                                                         // 75 - 78
+  "1", "2", "3",                                                              // 79 - 81
+  "0", ".",                                                                   // 82 - 83
+  "RESERVED",
 };
 
 static char* shift_keycode_str[] = {
@@ -51,11 +52,11 @@ static char* shift_keycode_str[] = {
   "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",                // 59 - 68
   "NumLock",                                                                  // 69
   "ScrollLock",                                                               // 70
-  "Keypad-7/Home", "Keypad-8/Up", "Keypad-9/PgUp",                            // 71 -73
-  "Keypad--",                                                                 // 74
-  "Keypad-4/Left", "Keypad-5", "Keypad-6/Right", "Keypad-+",                  // 75 - 78
-  "Keypad-1/End", "Keypad-2/Down", "Keypad-3/PgDn",                           // 79 - 81
-  "Keypad-0/Ins", "Keypad-./Del",                                             // 82 - 83
+  "7", "8", "9",                                                              // 71 -73
+  "-",                                                                        // 74
+  "4", "5", "6", "+",                                                         // 75 - 78
+  "1", "2", "3",                                                              // 79 - 81
+  "0", ".",                                                                   // 82 - 83
   "RESERVED", // maps K_NUMBER_OF_KEYS just in case it gets triggered
 };
 
@@ -90,9 +91,16 @@ static void print_char(KeyCode_t keycode, KeyMod_t modifiers) {
 }
 
 static void handle_keypad_down(KeyCode_t keycode, KeyMod_t modifiers) {
-  switch (keycode) {
-  case K_ERROR:
-    break;
+  bool is_num_lock = (modifiers & KMOD_NUMLOCK);
+  bool is_extend = (modifiers & KMOD_EXTEND);
+  if (is_extend) {
+    // TODO handle keypad + extend modifier
+  } else {
+    if (is_num_lock) {
+      kprint(keycode_str[keycode]);
+    } else {
+      // TODO HOME, UP, DOWN, etc.
+    }
   }
 }
 
@@ -123,7 +131,7 @@ static void on_key_down(KeyCode_t keycode, KeyMod_t modifiers) {
   case K_KEYPAD3:
   case K_KEYPAD0:
   case K_KEYPADPERIOD:
-    // TODO handle keypad + extend modifier
+    handle_keypad_down(keycode, modifiers);
     break;
 
   case K_BACKSPACE:

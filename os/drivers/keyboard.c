@@ -113,6 +113,11 @@ static void handle_key_up(u8 code) {
 static void keyboard_callback(registers_t regs) {
   u8 scancode = port_byte_in(0x60);
 
+  if (scancode == 224) {
+    is_extend = true;
+    return;
+  }
+
   if (scancode <= 128) {
     if (scancode < NUM_RECOGNIZED_CODES) {
       int key_index = scancode;
@@ -123,9 +128,8 @@ static void keyboard_callback(registers_t regs) {
   } else if (scancode <= 128 + NUM_RECOGNIZED_CODES) {
     int key_index = scancode - 128;
     handle_key_up(key_index);
-  } else if (scancode == 224) {
-    is_extend = !is_extend;
   }
+  is_extend = false;
 }
 
 void init_keyboard() {
