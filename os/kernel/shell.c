@@ -12,8 +12,24 @@ struct Shell {
   int cursor_col;
 } shell;
 
+// -------------- Text Rendering Logic --------------- //
+
 static void shell_render_position(int row, int col) {
   screen_put_char(shell.buf[row][col], row, col, shell.attr[row][col]);
+}
+
+/**
+ * Renders everything starting from the given row and col.
+ */
+static void shell_render_from_position(int start_row, int start_col) {
+  for (int col = start_col; col < SCREEN_MAX_COLS; ++col) {
+    shell_render_position(start_row, col);
+  }
+  for (int row = start_row + 1; row < SCREEN_MAX_ROWS; ++row) {
+    for (int col = 0; col < SCREEN_MAX_COLS; ++col) {
+      shell_render_position(row, col);
+    }
+  }
 }
 
 static void shell_render_cursor() {
@@ -86,7 +102,7 @@ static void shell_print_char_with_attr(char c, int attr) {
     }
     shell.buf[shell.cursor_row][shell.cursor_col] = c;
     shell.attr[shell.cursor_row][shell.cursor_col] = attr;
-    shell_render_position(shell.cursor_row, shell.cursor_col);
+    shell_render_from_position(shell.cursor_row, shell.cursor_col);
     ++shell.cursor_col;
     shell_render_cursor();
   }
@@ -106,6 +122,13 @@ void shell_print(const char* msg) {
   shell_print_with_attr(msg, SCREEN_WHITE_ON_BLACK);
 }
 
+// -------------------------------------------------------------- //
+
+
+
+
+
+// ------------- Key Listener Logic ------------------------- //
 /**
  * Maps each keycode to a string that can be printed to the shell
  */
@@ -252,6 +275,14 @@ static void on_key_down(KeyCode_t keycode, KeyMod_t modifiers) {
 static void on_key_up(KeyCode_t keycode, KeyMod_t modifiers) {
 
 }
+
+// ---------------------------------------------------------------- //
+
+
+
+
+
+
 
 
 void shell_init() {
