@@ -123,7 +123,7 @@ static void keyboard_callback(registers_t regs) {
       int key_index = scancode;
       handle_key_down(key_index);
     } else {
-      kprint("Unknown key down\n");
+      // ignore unknown key down
     }
   } else if (scancode <= 128 + NUM_RECOGNIZED_CODES) {
     int key_index = scancode - 128;

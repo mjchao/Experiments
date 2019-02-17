@@ -6,10 +6,9 @@ void entrypoint() {
 }
 
 void main() {
-  clear_terminal();
-  kprint("Hello World!\n\n\n");
-  kprint("HELLO WORLD!\n");
-  init_shell();
+  shell_init();
+  shell_kprint("Hello World!\n\n\n");
+  shell_kprint("HELLO WORLD!\n");
   return;
 }
 

@@ -16,6 +16,16 @@ void print_str(const char* c, int attr);
 void kprint(const char* c);
 
 /**
+ * Puts the given character at the given position
+ */
+void screen_put_char(char c, int row, int col, int attr);
+
+/**
+ * Sets the cursor at the given position
+ */
+void screen_set_cursor(int row, int col);
+
+/**
  * Clears the terminal
  */
 void clear_terminal();
