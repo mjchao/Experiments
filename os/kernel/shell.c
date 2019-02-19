@@ -1,87 +1,149 @@
 #include "kernel/shell.h"
+#include "kernel/util.h"
 #include "drivers/keyboard.h"
 #include "drivers/screen.h"
 #include "cpu/isr.h"
 #include <stdbool.h>
 
+#define SHELL_HISTORY_MAX_ROWS 25
+#define SHELL_INPUT_MAX_ROWS 3
+#define SHELL_MAX_COLS SCREEN_MAX_COLS
+
+typedef struct {
+  int attr;
+  char c;
+} ScreenChar;
 
 struct Shell {
-  char buf[SCREEN_MAX_ROWS][SCREEN_MAX_COLS];
-  char attr[SCREEN_MAX_ROWS][SCREEN_MAX_COLS];
+  // TODO allocate from heap.
+  ScreenChar history[SHELL_HISTORY_MAX_ROWS][SHELL_MAX_COLS];
+  ScreenChar input[SHELL_INPUT_MAX_ROWS][SHELL_MAX_COLS];
+  int history_start_row;
+  int history_end_row;
+  int history_end_col;
+
+  int input_end_row;
+  int input_end_col;
+
   int cursor_row;
   int cursor_col;
 } shell;
 
 // -------------- Text Rendering Logic --------------- //
 
-static void shell_render_position(int row, int col) {
-  screen_put_char(shell.buf[row][col], row, col, shell.attr[row][col]);
-}
-
-/**
- * Renders everything starting from the given row and col.
- */
-static void shell_render_from_position(int start_row, int start_col) {
-  for (int col = start_col; col < SCREEN_MAX_COLS; ++col) {
-    shell_render_position(start_row, col);
-  }
-  for (int row = start_row + 1; row < SCREEN_MAX_ROWS; ++row) {
-    for (int col = 0; col < SCREEN_MAX_COLS; ++col) {
-      shell_render_position(row, col);
-    }
-  }
-}
-
-static void shell_render_cursor() {
-  screen_set_cursor(shell.cursor_row, shell.cursor_col);
-}
-
-static void shell_render_all() {
+// Renders user input, and then renders history.
+static void shell_render() {
   for (int row = 0; row < SCREEN_MAX_ROWS; ++row) {
     for (int col = 0; col < SCREEN_MAX_COLS; ++col) {
-      shell_render_position(row, col);
+      screen_put_char('\0', row, col, SCREEN_WHITE_ON_BLACK);
     }
   }
-  shell_render_cursor();
-}
 
-void shell_clear() {
- for (int row = 0; row < SCREEN_MAX_ROWS; ++row) {
-    for (int col = 0; col < SCREEN_MAX_COLS; ++col) {
-      shell.buf[row][col] = '\0';
-      shell.attr[row][col] = SCREEN_WHITE_ON_BLACK;
+  // figure out how many rows of the screen we'll be taking up
+  int required_screen_rows = min(SCREEN_MAX_ROWS,
+      (shell.input_end_row + 1) + (shell.history_end_row + 1));
+
+  // TODO render user input - something is horribly messed up
+  int screen_input_start_row = required_screen_rows - 1 - shell.input_end_row;
+  /*for (int row = 0; row <= shell.input_end_row; ++row) {
+    int screen_row = screen_input_start_row + row;
+    int end_col = (row == shell.input_end_row) ? shell.input_end_col :
+      SHELL_MAX_COLS;
+    for (int col = 0; col < end_col; ++col) {
+      screen_put_char(shell.input[row][col].c, row, col,
+          shell.input[row][col].attr);
+    }
+  }*/
+
+  // render shell history
+  for (int screen_row = 0; screen_row < screen_input_start_row; ++screen_row) {
+    int history_row = (shell.history_start_row + screen_row) %
+        SHELL_HISTORY_MAX_ROWS;
+    int end_col = (screen_row == screen_input_start_row - 1) ?
+        shell.history_end_col : SHELL_MAX_COLS;
+    for (int col = 0; col < end_col; ++col) {
+      screen_put_char(shell.history[history_row][col].c, screen_row, col,
+          shell.history[history_row][col].attr);
     }
   }
- shell.cursor_row = 0;
- shell.cursor_col = 0;
- shell_render_all();
 }
 
-static void shell_scroll_one_line() {
-  //TODO store history
-  for (int row = 1; row < SCREEN_MAX_ROWS; ++row) {
-    for (int col = 0; col < SCREEN_MAX_COLS; ++col) {
-      shell.buf[row-1][col] = shell.buf[row][col];
-      shell.attr[row-1][col] = shell.attr[row][col];
+static void shell_clear_history() {
+  for (int row = 0; row < SHELL_HISTORY_MAX_ROWS; ++row) {
+    for (int col = 0; col < SHELL_MAX_COLS; ++col) {
+      shell.history[row][col].c = 0;
+      shell.history[row][col].attr = SCREEN_WHITE_ON_BLACK;
     }
   }
-  for (int col = 0; col < SCREEN_MAX_COLS; ++col) {
-    shell.buf[SCREEN_MAX_ROWS - 1][col] = '\0';
-    shell.attr[SCREEN_MAX_ROWS - 1][col] = SCREEN_WHITE_ON_BLACK;
+  shell.history_start_row = 0;
+  shell.history_end_row = 0;
+  shell.history_end_col = 0;
+}
+
+static void shell_add_history_newline() {
+  shell.history_end_col = 0;
+  shell.history_end_row += 1;
+
+  // wrapped around and time to start throwing away old history
+  if (shell.history_end_row == SHELL_HISTORY_MAX_ROWS) {
+    shell.history_end_row = 0;
+  } 
+  if (shell.history_end_row == shell.history_start_row) {
+    shell.history_start_row += 1;
   }
 }
 
-static void shell_go_to_newline() {
-  shell.cursor_row += 1;
-  shell.cursor_col = 0;
-  if (shell.cursor_row == SCREEN_MAX_ROWS) {
-    shell_scroll_one_line();
-    shell.cursor_row = SCREEN_MAX_ROWS - 1;
+static void shell_add_to_history(char c, int attr) {
+  shell.history[shell.history_end_row][shell.history_end_col].c = c;
+  shell.history[shell.history_end_row][shell.history_end_col].attr = attr;
+  shell.history_end_col += 1;
+
+  // end of line
+  if (shell.history_end_col == SHELL_MAX_COLS) {
+    shell_add_history_newline();
   }
-  shell_render_all();
+}
+
+static void shell_clear_input() {
+  for (int row = 0; row < SHELL_INPUT_MAX_ROWS; ++row) {
+    for (int col = 0; col < SHELL_MAX_COLS; ++col) {
+      shell.input[row][col].c = 0;
+      shell.input[row][col].attr = SCREEN_WHITE_ON_BLACK;
+    }
+  }
+  shell.input_end_row = 0;
+  shell.input_end_col = 0;
+}
+
+static void shell_add_to_input(char c, int attr) {
+  if (shell.input_end_row == SHELL_INPUT_MAX_ROWS - 1 &&
+      shell.input_end_col == SHELL_MAX_COLS) {
+    // refuse to process more user input
+    return;
+  }
+
+  shell.input[shell.input_end_row][shell.input_end_col].c = c;
+  shell.input[shell.input_end_row][shell.input_end_col].attr = attr;
+  shell.input_end_col += 1;
+  if (shell.input_end_col == SHELL_MAX_COLS) {
+    shell.input_end_row += 1;
+    shell.input_end_col = 0;
+  }
 }
 
 static void shell_print_char_with_attr(char c, int attr);
+void shell_print_input_with_attr(const char* input, int attr) {
+  for (const char* c = input; *c != '\0'; ++c) {
+    // XXX something horribly wrong with rendering input - probably in
+    // bootsect. Just print as non-input for now.
+    shell_print_char_with_attr(*c, attr);
+  }
+  shell_render();
+}
+
+void shell_print_input(const char* input) {
+  shell_print_input_with_attr(input, SCREEN_WHITE_ON_BLACK);
+}
 
 static void shell_print_tab(int attr) {
   for (int i = 0; i < 4; ++i) {
@@ -91,20 +153,13 @@ static void shell_print_tab(int attr) {
 
 static void shell_print_char_with_attr(char c, int attr) {
   if (c == '\n') {
-    shell_go_to_newline();
+    shell_add_history_newline();
   } else if (c == '\t') {
     shell_print_tab(attr);
 
   // normal characters that only take up one space
   } else {
-    if (shell.cursor_col == SCREEN_MAX_COLS) {
-      shell_go_to_newline();
-    }
-    shell.buf[shell.cursor_row][shell.cursor_col] = c;
-    shell.attr[shell.cursor_row][shell.cursor_col] = attr;
-    shell_render_from_position(shell.cursor_row, shell.cursor_col);
-    ++shell.cursor_col;
-    shell_render_cursor();
+    shell_add_to_history(c, attr);
   }
 }
 
@@ -112,6 +167,7 @@ void shell_print_with_attr(const char* msg, int attr) {
   for (const char* c = msg; *c != '\0'; ++c) {
     shell_print_char_with_attr(*c, attr);
   }
+  shell_render();
 }
 
 void shell_kprint(const char* msg) {
@@ -194,22 +250,22 @@ static void print_char(KeyCode_t keycode, KeyMod_t modifiers) {
   if (is_shift) {
     if (is_alpha) {
       if (is_caps_lock) {
-        shell_print(keycode_str[keycode]);
+        shell_print_input(keycode_str[keycode]);
       } else {
-        shell_print(shift_keycode_str[keycode]);
+        shell_print_input(shift_keycode_str[keycode]);
       }
     } else {
-      shell_print(shift_keycode_str[keycode]);
+      shell_print_input(shift_keycode_str[keycode]);
     }
   } else {
     if (is_alpha) {
       if (is_caps_lock) {
-        shell_print(shift_keycode_str[keycode]);
+        shell_print_input(shift_keycode_str[keycode]);
       } else {
-        shell_print(keycode_str[keycode]);
+        shell_print_input(keycode_str[keycode]);
       }
     } else {
-      shell_print(keycode_str[keycode]);
+      shell_print_input(keycode_str[keycode]);
     }
   }
 }
@@ -278,20 +334,13 @@ static void on_key_up(KeyCode_t keycode, KeyMod_t modifiers) {
 
 // ---------------------------------------------------------------- //
 
-
-
-
-
-
-
-
 void shell_init() {
-  shell_clear(); 
+  shell_clear_history();
+  shell_clear_input();
   shell_kprint("Initializing shell...\n");
 
   isr_install();
   asm volatile("sti");
-  
 
   init_keyboard();
   keyboard_on_key_down = on_key_down;

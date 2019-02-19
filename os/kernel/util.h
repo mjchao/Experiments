@@ -5,3 +5,5 @@ void int_to_ascii(int n, char str[]);
 void reverse(char s[]);
 
 int strlen(char s[]);
+
+int min(int a, int b);
